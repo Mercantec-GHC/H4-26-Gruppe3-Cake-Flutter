@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/user_model.dart';
+import '../models/register_model.dart';
 import '../services/auth_service.dart';
 import 'login_page.dart';
 
@@ -42,7 +42,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _isLoading = true;
       });
 
-      final user = UserModel(
+      final user = RegisterModel(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         email: _emailController.text.trim(),
