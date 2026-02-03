@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../models/user_model.dart';
+import '../services/auth_service.dart';
 import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -9,30 +11,93 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  // Form key til validering af input
   final _formKey = GlobalKey<FormState>();
-  // Kontrollerer om kodeord skal være skjult eller synligt
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
-  // Controllers til at gemme kodeord værdier
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _birthdayController = TextEditingController();
 
+  final AuthService _authService = AuthService();
+
   @override
   void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _birthdayController.dispose();
     super.dispose();
   }
 
+  Future<void> _registerUser() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final user = UserModel(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        birthday: DateTime.parse(_birthdayController.text),
+      );
+
+      final response = await _authService.register(user);
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Bruger oprettet succesfuldt!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(
+            builder: (context) => const LoginPage(),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fejl: ${response.body}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Fejl ved registrering: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        // SingleChildScrollView gør siden scrollbar hvis der ikke er plads
         child: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -54,15 +119,15 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                // Form container med fast bredde på 300
                 SizedBox(
                   width: 300,
                   child: Form(
-                    key: _formKey, // Brugt til validering af alle felter
+                    key: _formKey,
                     child: Column(
                       children: [
                         TextFormField(
-                          decoration: InputDecoration(
+                          controller: _firstNameController,
+                          decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             labelText: 'Fornavn',
                           ),
@@ -70,7 +135,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
-                          decoration: InputDecoration(
+                          controller: _lastNameController,
+                          decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             labelText: 'Efternavn',
                           ),
@@ -78,7 +144,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
-                          decoration: InputDecoration(
+                          controller: _emailController,
+                          decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             labelText: 'Email',
                           ),
@@ -89,43 +156,38 @@ class _RegisterPageState extends State<RegisterPage> {
                           },
                         ),
                         const SizedBox(height: 12),
-                        // Fødselsdag feltet med datepicker
                         TextFormField(
                           controller: _birthdayController,
-                          readOnly: true, // Kan ikke skrive direkte i feltet
-                          decoration: InputDecoration(
+                          readOnly: true,
+                          decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             labelText: 'Fødselsdag',
-                            suffixIcon: const Icon(Icons.calendar_today),
+                            suffixIcon: Icon(Icons.calendar_today),
                           ),
                           onTap: () async {
-                            // Åbner datepicker kalender
                             final pickedDate = await showDatePicker(
                               context: context,
                               initialDate: DateTime(2000),
                               firstDate: DateTime(1950),
                               lastDate: DateTime.now(),
                             );
-                            // Gemmer datoen hvis brugeren valgte en
                             if (pickedDate != null) {
-                              _birthdayController.text = 
-                                '${pickedDate.day}/${pickedDate.month}/${pickedDate.year}';
+                              _birthdayController.text =
+                                  '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
                             }
                           },
                           validator: (v) => v?.isEmpty ?? true ? 'Udfyld feltet' : null,
                         ),
                         const SizedBox(height: 12),
-                        // Kodeord felt med vis/skjul knap
                         TextFormField(
                           controller: _passwordController,
-                          obscureText: _obscurePassword, // Hvis true: stjerner, hvis false: viser tekst
+                          obscureText: _obscurePassword,
                           decoration: InputDecoration(
-                            border: OutlineInputBorder(),
+                            border: const OutlineInputBorder(),
                             labelText: 'Kodeord',
                             suffixIcon: IconButton(
                               icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
                               onPressed: () {
-                                // Skifter mellem at vise og skjule kodeord
                                 setState(() {
                                   _obscurePassword = !_obscurePassword;
                                 });
@@ -133,24 +195,21 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                           validator: (v) {
-                            // Tjekker at feltet ikke er tomt og mindst 6 tegn
                             if (v?.isEmpty ?? true) return 'Udfyld feltet';
                             if (v!.length < 6) return 'Mindst 6 tegn';
                             return null;
                           },
                         ),
                         const SizedBox(height: 12),
-                        // Bekræftelse af kodeord felt
                         TextFormField(
                           controller: _confirmPasswordController,
                           obscureText: _obscureConfirmPassword,
                           decoration: InputDecoration(
-                            border: OutlineInputBorder(),
+                            border: const OutlineInputBorder(),
                             labelText: 'Bekræft kodeord',
                             suffixIcon: IconButton(
                               icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
                               onPressed: () {
-                                // Skifter mellem at vise og skjule bekræftelse kodeord
                                 setState(() {
                                   _obscureConfirmPassword = !_obscureConfirmPassword;
                                 });
@@ -158,14 +217,12 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                           validator: (v) {
-                            // Tjekker at bekræftelse matcher det oprindelige kodeord
                             if (v?.isEmpty ?? true) return 'Udfyld feltet';
                             if (v != _passwordController.text) return 'Kodeordene stemmer ikke';
                             return null;
                           },
                         ),
                         const SizedBox(height: 24),
-                        // Knap der validerer alle felter før registrering
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -174,16 +231,26 @@ class _RegisterPageState extends State<RegisterPage> {
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
-                            onPressed: () {
-                              // Validerer alle felter i formularen
-                              if (_formKey.currentState!.validate()) {
-                                // TODO: Implementer registrering logik
-                              }
-                            },
-                            child: const Text(
-                              'Opret bruger',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    if (_formKey.currentState!.validate()) {
+                                      _registerUser();
+                                    }
+                                  },
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Opret bruger',
+                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
                           ),
                         ),
                       ],
@@ -191,7 +258,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Link tilbage til login siden
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -199,8 +265,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     GestureDetector(
                       onTap: () => Navigator.of(context).pushReplacement(
                         MaterialPageRoute<void>(
-                          builder:(context) => const LoginPage(),
-                        )
+                          builder: (context) => const LoginPage(),
+                        ),
                       ),
                       child: const Text(
                         'Log ind',
