@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/user_model.dart';
+import '../models/register_model.dart';
 
 class AuthService {
   static const String baseUrl = 'https://wavelength-api.mercantec.tech';
 
-  Future<http.Response> register(UserModel user) async {
+  Future<http.Response> register(RegisterModel user) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/Auth/register'),
