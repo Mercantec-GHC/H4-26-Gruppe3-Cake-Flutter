@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wavelength/main.dart';
+import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -95,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
                     GestureDetector(
                       onTap: () => Navigator.of(context).pushReplacement(
                         MaterialPageRoute<void>(
-                          builder: (context) => MyHomePage(title: 'test'),
+                          builder: (context) => RegisterPage(),
                         ),
                       ),
                       child: const Text(
