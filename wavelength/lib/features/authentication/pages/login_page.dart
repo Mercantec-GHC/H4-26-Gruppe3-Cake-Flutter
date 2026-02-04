@@ -122,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
                       DateTime expiry = DateTime.now().toUtc().add(Duration(seconds: model.expires));
                       await _secureStorage.write(key: 'jwtExpiry', value: expiry.toString());
 
-                      Navigator.of(context).pushReplacement(
+                      Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (context) => const MyHomePage(title: 'Wavelength'),
                         ),
@@ -144,7 +144,7 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     const Text('Har du ikke en konto? '),
                     GestureDetector(
-                      onTap: () => Navigator.of(context).pushReplacement(
+                      onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (context) => RegisterPage(),
                         ),
