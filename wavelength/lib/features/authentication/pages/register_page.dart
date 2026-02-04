@@ -65,11 +65,7 @@ class _RegisterPageState extends State<RegisterPage> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
-            builder: (context) => const LoginPage(),
-          ),
-        );
+        Navigator.of(context).pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -263,11 +259,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     const Text('Har du allerede en konto? '),
                     GestureDetector(
-                      onTap: () => Navigator.of(context).pushReplacement(
-                        MaterialPageRoute<void>(
-                          builder: (context) => const LoginPage(),
-                        ),
-                      ),
+                      onTap: () => Navigator.of(context).pop(),
                       child: const Text(
                         'Log ind',
                         style: TextStyle(
