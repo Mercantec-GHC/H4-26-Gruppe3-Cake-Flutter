@@ -107,7 +107,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Opret bruger',
+                  'Opret bruger.',
                   style: TextStyle(
                     color: Colors.deepPurple,
                     fontSize: 40,
