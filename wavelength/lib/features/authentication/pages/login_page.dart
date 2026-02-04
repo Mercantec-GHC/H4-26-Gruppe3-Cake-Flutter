@@ -93,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     const Text('Har du ikke en konto? '),
                     GestureDetector(
-                      onTap: () => Navigator.of(context).pushReplacement(
+                      onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (context) => RegisterPage(),
                         ),
