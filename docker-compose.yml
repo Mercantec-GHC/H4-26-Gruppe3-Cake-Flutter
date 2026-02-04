@@ -1,0 +1,10 @@
+services:
+  wavelength:
+    image: ${DOCKER_REGISTRY-}flutter
+    build:
+      context: ./wavelength
+      dockerfile: Dockerfile
+    container_name: wavelength-flutter
+    ports:
+      - "${HTTP_PORT}:80"
+    restart: unless-stopped
