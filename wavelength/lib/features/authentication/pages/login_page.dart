@@ -1,5 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:wavelength/main.dart';
+import '../models/login_model.dart';
+import '../models/login_response_model.dart';
+import '../services/auth_service.dart';
 import 'register_page.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,6 +18,18 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
+
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _authService = AuthService();
+  final _secureStorage = FlutterSecureStorage();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context){
@@ -43,6 +62,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(
                 width: 350,
                 child: TextField(
+                  controller: _emailController,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Email',
@@ -53,6 +73,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(
                 width: 350,
                 child: TextField(
+                  controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
@@ -81,7 +102,37 @@ class _LoginPageState extends State<LoginPage> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   ),
-                  onPressed: () {},
+                  onPressed: () async {
+                    final model = LoginModel(
+                      email: _emailController.text.trim(),
+                      password: _passwordController.text.trim(),
+                    );
+
+                    final response = await _authService.login(model);
+                    if(!mounted) return;
+
+                    if (response.statusCode == 200){
+                      // Save JWT Token
+                      Map<String, dynamic> json = jsonDecode(response.body);
+
+                      LoginResponseModel model = LoginResponseModel.fromJson(json);
+
+                      await _secureStorage.write(key: 'jwtToken', value: model.jwtToken);
+                      await _secureStorage.write(key: 'refreshToken', value: model.refreshToken);
+                      DateTime expiry = DateTime.now().toUtc().add(Duration(seconds: model.expires));
+                      await _secureStorage.write(key: 'jwtExpiry', value: expiry.toString());
+
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (context) => const MyHomePage(title: 'Wavelength'),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Login fejlede: ${response.statusCode}')),
+                      );
+                    }
+                  },
                   child: const Text('Log ind'),
                 ),
               ),
