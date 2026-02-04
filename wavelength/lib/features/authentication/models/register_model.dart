@@ -1,11 +1,11 @@
-class UserModel {
+class RegisterModel {
   final String firstName;
   final String lastName;
   final String email;
   final String password;
   final DateTime birthday;
 
-  UserModel({
+  RegisterModel({
     required this.firstName,
     required this.lastName,
     required this.email,
@@ -13,8 +13,8 @@ class UserModel {
     required this.birthday,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
+  factory RegisterModel.fromJson(Map<String, dynamic> json) {
+    return RegisterModel(
       firstName: json['firstName'] as String,
       lastName: json['lastName'] as String,
       email: json['email'] as String,
@@ -33,14 +33,14 @@ class UserModel {
     };
   }
 
-  UserModel copyWith({
+  RegisterModel copyWith({
     String? firstName,
     String? lastName,
     String? email,
     String? password,
     DateTime? birthday,
   }) {
-    return UserModel(
+    return RegisterModel(
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       email: email ?? this.email,
@@ -51,6 +51,6 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(firstName: $firstName, lastName: $lastName, email: $email, password: $password, birthday: $birthday)';
+    return 'RegisterModel(firstName: $firstName, lastName: $lastName, email: $email, password: $password, birthday: $birthday)';
   }
 }
