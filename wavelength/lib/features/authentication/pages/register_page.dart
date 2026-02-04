@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/register_model.dart';
+import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import 'login_page.dart';
 
@@ -42,7 +42,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _isLoading = true;
       });
 
-      final user = RegisterModel(
+      final user = UserModel(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         email: _emailController.text.trim(),
@@ -65,7 +65,11 @@ class _RegisterPageState extends State<RegisterPage> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop();
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(
+            builder: (context) => const LoginPage(),
+          ),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -107,7 +111,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Opret bruger.',
+                  'Opret bruger',
                   style: TextStyle(
                     color: Colors.deepPurple,
                     fontSize: 40,
@@ -259,7 +263,11 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     const Text('Har du allerede en konto? '),
                     GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
+                      onTap: () => Navigator.of(context).pushReplacement(
+                        MaterialPageRoute<void>(
+                          builder: (context) => const LoginPage(),
+                        ),
+                      ),
                       child: const Text(
                         'Log ind',
                         style: TextStyle(
