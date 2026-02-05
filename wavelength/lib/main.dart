@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wavelength/features/authentication/pages/login_page.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -56,8 +57,14 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  String? jwt = '';
+  String? jwtRefresh = '';
 
-  void _incrementCounter() {
+  final _secureStorage = FlutterSecureStorage();
+
+  void _incrementCounter() async {
+    jwt = await _secureStorage.read(key: 'jwtExpiry');
+    jwtRefresh = await _secureStorage.read(key: 'refreshToken');
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
@@ -65,6 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
       _counter++;
+      print(jwt);
     });
   }
 
@@ -107,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             const Text('You have pushed the button this many times:'),
             Text(
-              '$_counter',
+              '$jwt',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
           ],
