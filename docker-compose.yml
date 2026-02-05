@@ -1,6 +1,6 @@
 services:
   wavelength:
-    image: ${DOCKER_REGISTRY-}flutter
+    image: ${DOCKER_REGISTRY-}wavelength
     build:
       context: ./wavelength
       dockerfile: Dockerfile
