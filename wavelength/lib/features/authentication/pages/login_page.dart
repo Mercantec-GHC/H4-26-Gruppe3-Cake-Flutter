@@ -127,9 +127,22 @@ class _LoginPageState extends State<LoginPage> {
                           builder: (context) => const MyHomePage(title: 'Wavelength'),
                         ),
                       );
-                    } else {
+                    } else if (response.statusCode == 401 || response.statusCode == 400) {
+                      // Unauthorized - wrong email or password
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Login fejlede: ${response.statusCode}')),
+                        const SnackBar(
+                          content: Text('Forkert email eller adgangskode. Prøv igen.'),
+                          backgroundColor: Colors.red,
+                          duration: Duration(seconds: 4),
+                        ),
+                      );
+                    } else {
+                      // Other errors
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Login fejlede: ${response.statusCode}'),
+                          backgroundColor: Colors.red,
+                        ),
                       );
                     }
                   },
