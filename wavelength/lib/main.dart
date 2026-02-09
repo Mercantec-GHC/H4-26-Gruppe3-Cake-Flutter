@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:wavelength/features/authentication/pages/login_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wavelength/features/authentication/services/auth_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,9 +31,58 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const LoginPage(),
+      home: const AuthCheckScreen(),
+    );
+  }
+}
+
+class AuthCheckScreen extends StatefulWidget {
+  const AuthCheckScreen({super.key});
+
+  @override
+  State<AuthCheckScreen> createState() => _AuthCheckScreenState();
+}
+
+class _AuthCheckScreenState extends State<AuthCheckScreen> {
+  final _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthStatus();
+  }
+
+  Future<void> _checkAuthStatus() async {
+    // Check if there's a valid JWT token
+    final token = await _authService.getValidJwtToken();
+    
+    if (!mounted) return;
+
+    if (token != null) {
+      // Token is valid, navigate to home page
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const MyHomePage(title: 'Wavelength'),
+        ),
+      );
+    } else {
+      // No valid token, navigate to login page
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }
