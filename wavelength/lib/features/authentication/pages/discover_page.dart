@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../models/discover_model.dart';
+import '../services/discover_service.dart';
 
 class DiscoverPage extends StatefulWidget {
   const DiscoverPage({Key? key}) : super(key: key);
@@ -8,38 +12,102 @@ class DiscoverPage extends StatefulWidget {
 }
 
 class _DiscoverPageState extends State<DiscoverPage> {
+  late Future<DiscoverUser> _discoverUserFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    const testUserId = '4bf35003af77409da3b779d116b073f6';
+    _discoverUserFuture = DiscoverService.fetchDiscoverUser(userId: testUserId);
+    
+    // _discoverUserFuture = DiscoverService.fetchDiscoverUser();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: Column(
+        child: FutureBuilder<DiscoverUser>(
+          future: _discoverUserFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.person_search, size: 64, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(
+                        snapshot.error.toString().contains('404')
+                            ? 'No users available to discover right now'
+                            : 'Error: ${snapshot.error}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _discoverUserFuture =
+                                DiscoverService.fetchDiscoverUser();
+                          });
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            final user = snapshot.data!;
+
+            return Column(
               children: [
-                const SizedBox(height: 4),
-                // Profile Header
-                _buildProfileHeader(),
-                const SizedBox(height: 4),
-                // Image Grid
-                _buildImageGrid(),
-                const SizedBox(height: 4),
-                // Category Tags
-                _buildCategoryTags(),
-                const SizedBox(height: 6),
-                // Action Buttons
-                _buildActionButtons(),
-                const SizedBox(height: 4),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 4),
+                          // Profile Header
+                          _buildProfileHeader(user),
+                          const SizedBox(height: 4),
+                          // Image Grid
+                          _buildImageGrid(user),
+                          const SizedBox(height: 4),
+                          // Category Tags
+                          _buildCategoryTags(user),
+                          const SizedBox(height: 6),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6.0),
+                    child: _buildActionButtons(),
+                  ),
+                ),
               ],
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(DiscoverUser user) {
     return Row(
       children: [
         CircleAvatar(
@@ -51,10 +119,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Emma, 23',
-              style: TextStyle(
-                fontSize: 16,
+            Text(
+              '${user.firstName}, 23',
+              style: const TextStyle(
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -62,8 +130,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
         ),
         const Spacer(),
         Container(
-          width: 36,
-          height: 36,
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [Color(0xFF87CEEB), Color(0xFFFFB6D9)],
@@ -78,7 +146,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
   }
 
-  Widget _buildImageGrid() {
+  Widget _buildImageGrid(DiscoverUser user) {
+    print('Interests count: ${user.interests.length}');
+    print('Interest IDs: ${user.interests}');
+    
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -88,48 +159,84 @@ class _DiscoverPageState extends State<DiscoverPage> {
         mainAxisSpacing: 6,
         childAspectRatio: 1.0,
       ),
-      itemCount: 6,
+      itemCount: user.interests.length,
       itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            _getIconForIndex(index),
-            color: Colors.grey[600],
-            size: 22,
-          ),
+        final interestId = user.interests[index];
+        final imageUrl = DiscoverService.getInterestImageUrl(interestId, miniature: true);
+        
+        print('Loading image: $imageUrl'); // Debug
+
+        return FutureBuilder<String?>(
+          future: _secureStorage.read(key: 'jwtToken'),
+          builder: (context, tokenSnapshot) {
+            if (!tokenSnapshot.hasData) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.image,
+                  color: Colors.grey[600],
+                  size: 22,
+                ),
+              );
+            }
+
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                httpHeaders: {
+                  'Authorization': 'Bearer ${tokenSnapshot.data}',
+                },
+                placeholder: (context, url) {
+                  return Container(
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                },
+                errorWidget: (context, url, error) {
+                  print('Image error for $imageUrl: $error'); // Debug
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.broken_image,
+                          color: Colors.grey[600],
+                          size: 22,
+                        ),
+                        Text(
+                          'ID: $interestId',
+                          style: TextStyle(fontSize: 10, color: Colors.grey[700]),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            );
+          },
         );
       },
     );
   }
 
-  IconData _getIconForIndex(int index) {
-    switch (index) {
-      case 0:
-        return Icons.music_note;
-      case 1:
-        return Icons.people;
-      case 2:
-        return Icons.album;
-      case 3:
-        return Icons.theater_comedy;
-      case 4:
-        return Icons.palette;
-      case 5:
-        return Icons.landscape;
-      default:
-        return Icons.image;
-    }
-  }
+  final _secureStorage = const FlutterSecureStorage();
 
-  Widget _buildCategoryTags() {
-    final tags = ['Musik', '80er film', 'Kunst', 'Natur'];
+  Widget _buildCategoryTags(DiscoverUser user) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: tags
+        children: user.tags
             .map(
               (tag) => Padding(
                 padding: const EdgeInsets.only(right: 6.0),
@@ -144,27 +251,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
               ),
             )
             .toList(),
-      ),
-    );
-  }
-
-  Widget _buildTagQuizButton() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF8DC),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: const Center(
-        child: Text(
-          'Tag Quiz',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFFB8860B),
-          ),
-        ),
       ),
     );
   }
@@ -258,35 +344,5 @@ class _DiscoverPageState extends State<DiscoverPage> {
       ),
     );
   }
-
-  Widget _buildMessagingIcons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildMessagingIcon(Icons.chat_bubble_outline, Colors.blue),
-        const SizedBox(width: 20),
-        _buildMessagingIcon(Icons.favorite_outline, Colors.purple),
-        const SizedBox(width: 20),
-        _buildMessagingIcon(Icons.chat_bubble_outline, Colors.blue),
-      ],
-    );
-  }
-
-  Widget _buildMessagingIcon(IconData icon, Color color) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Icon(
-          icon,
-          color: color,
-          size: 20,
-        ),
-      ),
-    );
-  }
 }
+
