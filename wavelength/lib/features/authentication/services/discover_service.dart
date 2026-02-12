@@ -7,7 +7,7 @@ class DiscoverService {
   static const String baseUrl = 'https://wavelength-api.mercantec.tech';
   static const _secureStorage = FlutterSecureStorage();
 
-  static Future<DiscoverUser> fetchDiscoverUser({String? userId}) async {
+  static Future<DiscoverUser> fetchDiscoverUser() async {
     try {
       final token = await _secureStorage.read(key: 'jwtToken');
       
@@ -15,19 +15,19 @@ class DiscoverService {
         throw Exception('No authentication token found');
       }
 
-      final endpoint = userId != null ? '$baseUrl/User/$userId' : '$baseUrl/User/Discover';
-
-      final response = await http.get(
-        Uri.parse(endpoint),
+      // POST to /User/Discover with empty exclusion list
+      final response = await http.post(
+        Uri.parse('$baseUrl/User/Discover'),
         headers: {
           'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
+        body: jsonEncode([]),
       ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
-        print('API Response: $json');
-        print('Available keys: ${json.keys}');
+        print('Discover Response: $json');
         return DiscoverUser.fromJson(json);
       } else {
         throw Exception('Failed: ${response.statusCode} - ${response.body}');
@@ -37,7 +37,11 @@ class DiscoverService {
     }
   }
 
-  static String getInterestImageUrl(int interestId, {bool miniature = true}) {
-    return '$baseUrl/Images/Interest/$interestId?miniature=$miniature';
+  static String getInterestImageUrl(int imageId, {bool miniature = true}) {
+    return '$baseUrl/Images/Interest/$imageId?miniature=$miniature';
+  }
+
+  static String getAvatarUrl(String userId) {
+    return '$baseUrl/Images/Avatar/$userId';
   }
 }

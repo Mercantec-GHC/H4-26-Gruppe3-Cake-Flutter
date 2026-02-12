@@ -3,7 +3,7 @@ class DiscoverUser {
   final String firstName;
   final String lastName;
   final String description;
-  final List<int> interests;
+  final List<int> pictures;
   final List<String> tags;
 
   DiscoverUser({
@@ -11,25 +11,17 @@ class DiscoverUser {
     required this.firstName,
     required this.lastName,
     required this.description,
-    required this.interests,
+    required this.pictures,
     required this.tags,
   });
 
   factory DiscoverUser.fromJson(Map<String, dynamic> json) {
-    print('=== JSON Data Received ===');
-    print('Full JSON: $json');
-    print('All keys in response: ${json.keys.toList()}');
-    
-    final interests = List<int>.from(json['interests'] ?? json['pictures'] ?? []);
-    print('Parsed interests: $interests');
-    print('Interests count: ${interests.length}');
-    
     return DiscoverUser(
       id: json['id'] ?? '',
       firstName: json['firstName'] ?? '',
       lastName: json['lastName'] ?? '',
       description: json['description'] ?? '',
-      interests: interests,
+      pictures: List<int>.from(json['pictures'] ?? []),
       tags: List<String>.from(json['tags'] ?? []),
     );
   }
