@@ -12,17 +12,15 @@ class AuthService {
   Future<http.Response> register(RegisterModel user) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/Auth/register'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(user.toJson()),
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout');
-        },
-      );
+            Uri.parse('$baseUrl/Auth/register'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(user.toJson()),
+          ).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
 
       return response;
     } catch (e) {
@@ -33,18 +31,16 @@ class AuthService {
   Future<http.Response> login(LoginModel user) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/Auth/login'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(user.toJson()),
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout');
-        },
-      );
-      
+            Uri.parse('$baseUrl/Auth/login'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(user.toJson()),
+          ).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
+
       return response;
     } catch (e) {
       throw Exception('Fejl ved login: $e');
@@ -52,21 +48,21 @@ class AuthService {
   }
 
   Future<http.Response> logout(String token) async {
-  try {
-    final response = await http.post(
-      Uri.parse('$baseUrl/Auth/logout'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    ).timeout(
-      const Duration(seconds: 10),
-      onTimeout: () {
-        throw Exception('Request timeout');
-      },
-    );
+    try {
+      final response = await http.post(
+            Uri.parse('$baseUrl/Auth/logout'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          ).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
 
-    return response;
+      return response;
     } catch (e) {
       throw Exception('Fejl ved logout: $e');
     }
@@ -75,23 +71,23 @@ class AuthService {
   Future<http.Response> me() async {
     try {
       final token = await getValidJwtToken();
-      
+
       if (token == null) {
         throw Exception('Ingen gyldig token fundet');
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/Auth/me'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout');
-        },
-      );
+            Uri.parse('$baseUrl/Auth/me'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          ).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
 
       return response;
     } catch (e) {
@@ -106,7 +102,7 @@ class AuthService {
   }) async {
     try {
       final token = await getValidJwtToken();
-      
+
       if (token == null) {
         throw Exception('Ingen gyldig token fundet');
       }
@@ -116,24 +112,26 @@ class AuthService {
         'NewPassword': newPassword,
         'ConfirmNewPassword': confirmNewPassword,
       });
-      
+
       print('UpdatePassword Request Body: $body'); // Debug
 
       final response = await http.put(
-        Uri.parse('$baseUrl/Auth/UpdatePassword'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: body,
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout');
-        },
-      );
+            Uri.parse('$baseUrl/Auth/UpdatePassword'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: body,
+          ).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
 
-      print('UpdatePassword Response: ${response.statusCode} - ${response.body}'); // Debug
+      print(
+        'UpdatePassword Response: ${response.statusCode} - ${response.body}',
+      ); // Debug
 
       return response;
     } catch (e) {
@@ -144,26 +142,24 @@ class AuthService {
   Future<http.Response> updateDescription(String description) async {
     try {
       final token = await getValidJwtToken();
-      
+
       if (token == null) {
         throw Exception('Ingen gyldig token fundet');
       }
 
       final response = await http.put(
-        Uri.parse('$baseUrl/Auth/UpdateDescription'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'Description': description,
-        }),
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout');
-        },
-      );
+            Uri.parse('$baseUrl/Auth/UpdateDescription'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'Description': description}),
+          ).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
 
       return response;
     } catch (e) {
@@ -171,10 +167,13 @@ class AuthService {
     }
   }
 
-  Future<http.Response> uploadAvatar(Uint8List imageBytes, String fileName) async {
+  Future<http.Response> uploadAvatar(
+    Uint8List imageBytes,
+    String fileName,
+  ) async {
     try {
       final token = await getValidJwtToken();
-      
+
       if (token == null) {
         throw Exception('Ingen gyldig token fundet');
       }
@@ -185,20 +184,21 @@ class AuthService {
       );
 
       request.headers['Authorization'] = 'Bearer $token';
-      
+
       // Determine content type based on file extension
       String contentType = 'image/jpeg';
       final lowerFileName = fileName.toLowerCase();
       if (lowerFileName.endsWith('.png')) {
         contentType = 'image/png';
-      } else if (lowerFileName.endsWith('.jpg') || lowerFileName.endsWith('.jpeg')) {
+      } else if (lowerFileName.endsWith('.jpg') ||
+          lowerFileName.endsWith('.jpeg')) {
         contentType = 'image/jpeg';
       } else if (lowerFileName.endsWith('.gif')) {
         contentType = 'image/gif';
       } else if (lowerFileName.endsWith('.webp')) {
         contentType = 'image/webp';
       }
-      
+
       request.files.add(
         http.MultipartFile.fromBytes(
           'file',
@@ -208,7 +208,9 @@ class AuthService {
         ),
       );
 
-      print('Uploading avatar: $fileName with content-type: $contentType'); // Debug
+      print(
+        'Uploading avatar: $fileName with content-type: $contentType',
+      ); // Debug
 
       final streamedResponse = await request.send().timeout(
         const Duration(seconds: 30),
@@ -218,7 +220,9 @@ class AuthService {
       );
 
       final response = await http.Response.fromStream(streamedResponse);
-      print('Upload Avatar Response: ${response.statusCode} - ${response.body}'); // Debug
+      print(
+        'Upload Avatar Response: ${response.statusCode} - ${response.body}',
+      ); // Debug
 
       return response;
     } catch (e) {
@@ -229,27 +233,26 @@ class AuthService {
   Future<Uint8List?> getAvatarImage() async {
     try {
       final token = await getValidJwtToken();
-      
+
       if (token == null) {
         throw Exception('Ingen gyldig token fundet');
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/Images/Avatar'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout');
-        },
-      );
+            Uri.parse('$baseUrl/Images/Avatar'),
+            headers: {'Authorization': 'Bearer $token'},
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
 
       if (response.statusCode == 200) {
         return response.bodyBytes;
       }
-      
+
       return null;
     } catch (e) {
       print('Fejl ved hentning af avatar: $e');
@@ -262,7 +265,8 @@ class AuthService {
     final refreshToken = await _secureStorage.read(key: 'refreshToken');
     final jwtExpiry = await _secureStorage.read(key: 'jwtExpiry');
 
-    if (jwtToken == null || refreshToken == null || jwtExpiry == null) return null;
+    if (jwtToken == null || refreshToken == null || jwtExpiry == null)
+      return null;
 
     final expiry = DateTime.tryParse(jwtExpiry);
     if (expiry == null) {
@@ -285,19 +289,16 @@ class AuthService {
   Future<bool> _refreshJwtToken(String refreshToken) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/Auth/refresh'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'refreshToken': refreshToken,
-        }),
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout');
-        },
-      );
+            Uri.parse('$baseUrl/Auth/refresh'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'refreshToken': refreshToken}),
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
 
       if (response.statusCode != 200) {
         return false;
@@ -327,23 +328,24 @@ class AuthService {
   Future<http.Response> getAllTags() async {
     try {
       final token = await getValidJwtToken();
-      
+
       if (token == null) {
         throw Exception('Ingen gyldig token fundet');
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/User/AllTags'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout');
-        },
-      );
+            Uri.parse('$baseUrl/User/AllTags'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
 
       return response;
     } catch (e) {
@@ -354,28 +356,70 @@ class AuthService {
   Future<http.Response> setUserTags(List<String> tags) async {
     try {
       final token = await getValidJwtToken();
-      
+
       if (token == null) {
         throw Exception('Ingen gyldig token fundet');
       }
 
       final response = await http.put(
-        Uri.parse('$baseUrl/User/SetTags'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(tags),
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout');
-        },
-      );
+            Uri.parse('$baseUrl/User/SetTags'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(tags),
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
 
       return response;
     } catch (e) {
       throw Exception('Fejl ved gemning af tags: $e');
+    }
+  }
+
+  Future<http.Response> editQuiz(Map<String, dynamic> quizData) async {
+    try {
+      final token = await getValidJwtToken();
+      if (token == null) throw Exception('Ingen gyldig token fundet');
+
+      final response = await http.post(
+            Uri.parse('$baseUrl/Quiz/EditQuiz'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(quizData),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      return response;
+    } catch (e) {
+      throw Exception('Fejl ved opdatering af quiz: $e');
+    }
+  }
+
+  Future<http.Response> getQuiz() async {
+    try {
+      final token = await getValidJwtToken();
+      if (token == null) throw Exception('Ingen gyldig token fundet');
+
+      final response = await http.get(
+            Uri.parse('$baseUrl/Quiz/MyQuiz'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
+
+      return response;
+    } catch (e) {
+      throw Exception('Fejl ved hentning af quiz: $e');
     }
   }
 
