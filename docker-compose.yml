@@ -1,9 +1,9 @@
 services:
   wavelength:
-    image: ${DOCKER_REGISTRY-}wavelength:0.2.0
+    image: ${DOCKER_REGISTRY-}wavelength
     build:
-      context: ./wavelength
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Wavelength/Dockerfile
     container_name: wavelength-flutter
     ports:
       - "${HTTP_PORT}:80"
