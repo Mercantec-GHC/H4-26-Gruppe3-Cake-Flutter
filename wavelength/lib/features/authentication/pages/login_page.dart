@@ -1,11 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:wavelength/main.dart';
 import '../models/login_model.dart';
 import '../models/login_response_model.dart';
 import '../services/auth_service.dart';
 import 'register_page.dart';
+import 'profile_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginPage extends StatefulWidget {
@@ -124,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (context) => const MyHomePage(title: 'Wavelength'),
+                          builder: (context) => const ProfilePage(),
                         ),
                       );
                     } else if (response.statusCode == 401 || response.statusCode == 400) {
