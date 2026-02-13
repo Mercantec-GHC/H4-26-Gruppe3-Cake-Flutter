@@ -1,0 +1,47 @@
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../models/discover_model.dart';
+
+class DiscoverService {
+  static const String baseUrl = 'https://wavelength-api.mercantec.tech';
+  static const _secureStorage = FlutterSecureStorage();
+
+  static Future<DiscoverUser> fetchDiscoverUser() async {
+    try {
+      final token = await _secureStorage.read(key: 'jwtToken');
+      
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      // POST to /User/Discover with empty exclusion list
+      final response = await http.post(
+        Uri.parse('$baseUrl/User/Discover'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode([]),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        print('Discover Response: $json');
+        return DiscoverUser.fromJson(json);
+      } else {
+        throw Exception('Failed: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  static String getInterestImageUrl(int imageId, {bool miniature = true}) {
+    return '$baseUrl/Images/Interest/$imageId?miniature=$miniature';
+  }
+
+  static String getAvatarUrl(String userId) {
+    return '$baseUrl/Images/Avatar/$userId';
+  }
+}

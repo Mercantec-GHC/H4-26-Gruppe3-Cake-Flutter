@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wavelength/features/authentication/pages/login_page.dart';
+import 'package:wavelength/features/authentication/pages/discover_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wavelength/features/authentication/services/auth_service.dart';
 
@@ -168,6 +169,17 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               '$jwt',
               style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const DiscoverPage(),
+                  ),
+                );
+              },
+              child: const Text('Go to Discover Page'),
             ),
           ],
         ),
