@@ -1,6 +1,6 @@
 services:
   wavelength:
-    image: ${DOCKER_REGISTRY-}wavelength
+    image: ${DOCKER_REGISTRY-}wavelength:0.2.0
     build:
       context: ./wavelength
       dockerfile: Dockerfile
