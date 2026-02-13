@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:wavelength/features/authentication/pages/login_page.dart';
 import 'package:wavelength/features/authentication/pages/discover_page.dart';
+import 'package:wavelength/features/authentication/pages/profile_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wavelength/features/authentication/services/auth_service.dart';
 
@@ -180,8 +181,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
               child: const Text('Go to Discover Page'),
-            ),
-          ],
+            ),            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ProfilePage(),
+                  ),
+                );
+              },
+              child: const Text('Go to Profile Page'),
+            ),          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
