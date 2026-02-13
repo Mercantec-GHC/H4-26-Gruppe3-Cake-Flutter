@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import 'register_page.dart';
 import 'profile_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../main.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -122,9 +123,9 @@ class _LoginPageState extends State<LoginPage> {
                       DateTime expiry = DateTime.now().toUtc().add(Duration(seconds: model.expires));
                       await _secureStorage.write(key: 'jwtExpiry', value: expiry.toString());
 
-                      Navigator.of(context).push(
+                      Navigator.of(context).pushReplacement(
                         MaterialPageRoute<void>(
-                          builder: (context) => const ProfilePage(),
+                          builder: (context) => const MyHomePage(title: 'Wavelength'),
                         ),
                       );
                     } else if (response.statusCode == 401 || response.statusCode == 400) {
