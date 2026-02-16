@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:typed_data';
+import 'package:wavelength/widgets/main_bottom_nav.dart';
 import '../models/discover_model.dart';
 import '../services/discover_service.dart';
 
@@ -107,6 +108,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
           },
         ),
       ),
+      bottomNavigationBar: const MainBottomNavBar(activeTab: MainNavTab.discover),
     );
   }
   

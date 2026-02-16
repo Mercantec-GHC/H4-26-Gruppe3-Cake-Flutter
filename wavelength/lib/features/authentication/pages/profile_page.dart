@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:wavelength/widgets/main_bottom_nav.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import 'login_page.dart';
@@ -79,7 +80,8 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final res = await _authService.me();
       if (res.statusCode == 200) {
-        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        final json =
+            jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
         final avatar = await _authService.getAvatarImage();
         setState(() {
           _user = UserModel.fromJson(json);
@@ -88,6 +90,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _selectedTagIds = Set<String>.from(_user?.tags ?? []);
           _isLoading = false;
         });
+        await _loadAvailableTags();
       } else {
         setState(() {
           _errorMessage = 'Kunne ikke hente profil: ${res.statusCode}';
@@ -122,7 +125,8 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final res = await _authService.getAllTags();
       if (res.statusCode == 200) {
-        final tagDict = jsonDecode(res.body) as Map<String, dynamic>;
+        final tagDict =
+            jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
         setState(() {
           _availableTags = Map<String, String>.from(
             tagDict.map((key, value) => MapEntry(key, value.toString())),
@@ -798,6 +802,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
+      bottomNavigationBar: const MainBottomNavBar(activeTab: MainNavTab.profile),
     );
   }
 }
