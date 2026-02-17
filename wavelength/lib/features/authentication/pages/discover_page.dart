@@ -84,7 +84,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: _buildBody(),
       ),
@@ -386,9 +386,12 @@ class _DiscoverPageState extends State<DiscoverPage> {
           .map(
             (tag) => Chip(
               label: Text(tag),
-              backgroundColor: Colors.white,
-              side: BorderSide(color: Colors.grey[300]!),
-              labelStyle: const TextStyle(color: Colors.black87, fontSize: 12),
+              backgroundColor: Theme.of(context).chipTheme.backgroundColor ?? Colors.grey[800],
+              side: BorderSide(color: Theme.of(context).dividerColor),
+              labelStyle: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white,
+                fontSize: 12,
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 6),
               visualDensity: const VisualDensity(horizontal: -1, vertical: -2),
             ),
@@ -433,11 +436,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 12,
             spreadRadius: 0,
             offset: const Offset(0, 4),
