@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/register_model.dart';
 import '../services/auth_service.dart';
+import 'email_validation_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -41,10 +42,12 @@ class _RegisterPageState extends State<RegisterPage> {
         _isLoading = true;
       });
 
+      final email = _emailController.text.trim();
+
       final user = RegisterModel(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
-        email: _emailController.text.trim(),
+        email: email,
         password: _passwordController.text,
         birthday: DateTime.parse(_birthdayController.text),
       );
@@ -64,7 +67,11 @@ class _RegisterPageState extends State<RegisterPage> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop();
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => EmailValidationPage(email: email),
+          ),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
