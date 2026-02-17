@@ -121,7 +121,7 @@ class MainBottomNavBar extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: Icon(Icons.chat_bubble_rounded, color: _iconColor(context, MainNavTab.matches)),
+              icon: Icon(Icons.people_alt_rounded, color: _iconColor(context, MainNavTab.matches)),
               onPressed: () => _goTo(context, MainNavTab.matches),
             ),
           ],
