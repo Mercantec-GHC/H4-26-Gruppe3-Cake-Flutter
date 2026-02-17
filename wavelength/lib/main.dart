@@ -60,7 +60,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   Future<void> _checkAuthStatus() async {
     // Check if there's a valid JWT token
     final token = await _authService.getValidJwtToken();
-    
+
     if (!mounted) return;
 
     if (token != null) {
@@ -73,20 +73,14 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     } else {
       // No valid token, navigate to login page
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const LoginPage(),
-        ),
+        MaterialPageRoute(builder: (context) => const LoginPage()),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }
 
@@ -167,31 +161,26 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: .center,
           children: [
             const Text('You have pushed the button this many times:'),
-            Text(
-              '$jwt',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            Text('$jwt', style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const DiscoverPage(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const DiscoverPage()),
                 );
               },
               child: const Text('Go to Discover Page'),
-            ),            const SizedBox(height: 10),
+            ),
+            const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const ProfilePage(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
                 );
               },
               child: const Text('Go to Profile Page'),
-            ),          ],
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
