@@ -77,7 +77,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       _isDragging = false;
     });
 
-    // Load a new profile to maintain 3 profiles.
+    // Load a new profile to maintain 3 profiles
     _loadNextProfile();
   }
 
