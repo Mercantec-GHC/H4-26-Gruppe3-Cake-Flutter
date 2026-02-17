@@ -11,9 +11,9 @@ ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PAT
 # Enable web
 RUN flutter config --enable-web
 
-# Copy ONLY the Flutter project into the container
+# Copy app
 WORKDIR /app
-COPY wavelength/ .
+COPY . .
 
 # Build release version
 RUN flutter build web --release
@@ -24,5 +24,7 @@ FROM nginx:alpine
 # Copy Flutter build to Nginx web root
 COPY --from=build /app/build/web /usr/share/nginx/html
 
+# Expose port
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]
