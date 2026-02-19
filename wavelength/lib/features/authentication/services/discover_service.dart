@@ -44,4 +44,32 @@ class DiscoverService {
   static String getAvatarUrl(String userId) {
     return '$baseUrl/Images/Avatar/$userId';
   }
+
+  static Future<void> dismissUser(String targetId) async {
+    try {
+      final token = await _secureStorage.read(key: 'jwtToken');
+      
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/UserVisibility/Dismissed?targetId=$targetId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      print('Dismiss Response: Status ${response.statusCode}');
+      print('Dismiss Response Body: ${response.body}');
+
+      if (response.statusCode != 200 && response.statusCode != 201 && response.statusCode != 204) {
+        print('Error dismissing user: ${response.statusCode} - ${response.body}');
+      } else {
+        print('User successfully dismissed: $targetId');
+      }
+    } catch (e) {
+      print('Error dismissing user: $e');
+    }
+  }
 }
