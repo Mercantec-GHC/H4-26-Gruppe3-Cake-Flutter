@@ -5,7 +5,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:typed_data';
 import '../models/discover_model.dart';
+import '../models/quiz_model.dart';
+import '../models/quiz_result_model.dart';
 import '../services/discover_service.dart';
+import '../services/quiz_service.dart';
+import '../widgets/quiz_dialog.dart';
 
 class DiscoverPage extends StatefulWidget {
   const DiscoverPage({super.key});
@@ -61,24 +65,141 @@ class _DiscoverPageState extends State<DiscoverPage> {
     }
   }
 
-  void _onSwipe(bool isLike) {
+  void _onSwipe(bool isLike) async {
     if (_profiles.isEmpty) return;
 
     final currentProfile = _profiles.first;
 
-    // If rejecting (X button), dismiss the user in database
-    if (!isLike) {
+    if (isLike) {
+      // Show quiz dialog on top of discover page
+      await _showQuizForUser(currentProfile.id);
+    } else {
+      // If rejecting (X button), dismiss the user in database
       DiscoverService.dismissUser(currentProfile.id);
+      
+      setState(() {
+        _profiles.removeAt(0);
+        _dragDistance = 0;
+        _isDragging = false;
+      });
+
+      // Load a new profile to maintain 3 profiles.
+      _loadNextProfile();
     }
+  }
 
-    setState(() {
-      _profiles.removeAt(0);
-      _dragDistance = 0;
-      _isDragging = false;
-    });
+  Future<void> _showQuizForUser(String userId) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: CircularProgressIndicator(color: Colors.purple),
+      ),
+    );
 
-    // Load a new profile to maintain 3 profiles.
-    _loadNextProfile();
+    try {
+      final questions = await QuizService.fetchUserQuiz(userId);
+      
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Show quiz dialog
+      if (mounted && questions.isNotEmpty) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => QuizDialog(
+            questions: questions,
+            userId: userId,
+            onComplete: (result) {
+              // Quiz completed with result
+              Navigator.pop(context);
+              _showQuizResult(result);
+            },
+          ),
+        );
+      } else {
+        _showErrorDialog('Ingen quiz spørgsmål tilgængelige');
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+      
+      // Show error dialog
+      String errorMessage = 'Kunne ikke indlæse quiz';
+      if (e.toString().contains('404')) {
+        errorMessage = 'Denne brugers quiz er ikke opsat endnu';
+      } else if (e.toString().contains('401')) {
+        errorMessage = 'Du skal være logget ind for at se quizzen';
+      }
+      
+      _showErrorDialog(errorMessage);
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Fejl'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showQuizResult(dynamic result) {
+    final matchPercent = result.matchPercent ?? 0;
+    final passed = result.passed ?? false;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(passed ? 'Du bestod! 🎉' : 'Du bestod ikke'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$matchPercent%',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: passed ? Colors.green : Colors.red,
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              passed
+                  ? 'Du matcher godt med denne bruger!'
+                  : 'I matcher ikke helt, prøv en anden bruger',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Continue the discover flow - remove current profile and load next one
+              setState(() {
+                if (_profiles.isNotEmpty) {
+                  _profiles.removeAt(0);
+                  _dragDistance = 0;
+                  _isDragging = false;
+                }
+              });
+              _loadNextProfile();
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
