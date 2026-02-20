@@ -47,6 +47,25 @@ class AuthService {
     }
   }
 
+  Future<http.Response> verifyEmail(String code) async {
+    try {
+      final response = await http.post(
+            Uri.parse('$baseUrl/Auth/verifyEmail'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'code': code}),
+          ).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
+
+      return response;
+    } catch (e) {
+      throw Exception('Fejl ved emailverifikation: $e');
+    }
+  }
+
   Future<http.Response> logout(String token) async {
     try {
       final response = await http.post(
