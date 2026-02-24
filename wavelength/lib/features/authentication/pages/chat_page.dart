@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
 import '../models/chat_model.dart';
 import '../services/chat_service.dart';
 
@@ -21,6 +24,8 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  late Timer _refreshTimer;
+  final _secureStorage = const FlutterSecureStorage();
 
   List<ChatMessage> _messages = [];
   String? _nextCursor;
@@ -38,6 +43,12 @@ class _ChatPageState extends State<ChatPage> {
     _loadCurrentUserId();
     _initializeChat();
     _scrollController.addListener(_onScroll);
+    // Auto-refresh messages every 1 second
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_actualChatRoomId != null && !_isSendingMessage) {
+        _loadMessagesQuietly();
+      }
+    });
   }
 
   // Initialize chat by getting room from list
@@ -66,6 +77,7 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
+    _refreshTimer.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -73,7 +85,26 @@ class _ChatPageState extends State<ChatPage> {
 
   // Get current user ID from token
   Future<void> _loadCurrentUserId() async {
-    // Implementation for getting current user ID if needed
+    try {
+      final token = await _secureStorage.read(key: 'jwtToken');
+      if (token != null) {
+        final parts = token.split('.');
+        if (parts.length == 3) {
+          final payload = parts[1];
+          final normalized = base64Url.normalize(payload);
+          final decoded = utf8.decode(base64Url.decode(normalized));
+          final json = jsonDecode(decoded);
+          if (mounted) {
+            setState(() {
+              _currentUserId = json['sub'] as String?;
+            });
+          }
+          print('DEBUG loaded current user ID: $_currentUserId');
+        }
+      }
+    } catch (e) {
+      print('Error loading current user ID: $e');
+    }
   }
 
   // Load initial messages
@@ -104,6 +135,31 @@ class _ChatPageState extends State<ChatPage> {
         _errorMessage = e.toString();
         _isLoadingMessages = false;
       });
+    }
+  }
+
+  // Load messages silently (without showing loading indicator)
+  Future<void> _loadMessagesQuietly() async {
+    if (_actualChatRoomId == null) return;
+
+    try {
+      final response = await ChatService.getMessages(_actualChatRoomId!, null);
+
+      if (!mounted) return;
+
+      // Only update if messages changed
+      if (response.messageObjects.length != _messages.length) {
+        setState(() {
+          _messages = response.messageObjects.reversed.toList();
+          _nextCursor = response.nextCursor;
+          _hasMore = response.hasMore;
+          _errorMessage = null;
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      // Silently fail for auto-refresh
+      print('Error auto-loading messages: $e');
     }
   }
 
@@ -221,14 +277,22 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+    final backgroundColor = isDarkMode ? const Color(0xFF121212) : const Color(0xFFF5F5F5);
     final textColor = isDarkMode ? Colors.white : Colors.black87;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text(widget.otherUserName),
+        title: Text(
+          widget.otherUserName,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
         backgroundColor: Colors.purple,
+        elevation: 0,
+        centerTitle: false,
       ),
       body: Column(
         children: [
@@ -279,9 +343,32 @@ class _ChatPageState extends State<ChatPage> {
 
     if (_messages.isEmpty) {
       return Center(
-        child: Text(
-          'Ingen beskeder endnu',
-          style: TextStyle(fontSize: 16, color: textColor),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.chat_bubble_outline,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Ingen beskeder endnu',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Send en besked for at starte samtalen',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -289,7 +376,7 @@ class _ChatPageState extends State<ChatPage> {
 
   return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index >= _messages.length) {
@@ -310,110 +397,144 @@ class _ChatPageState extends State<ChatPage> {
     
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
-      child: Column(
-        crossAxisAlignment: isCurrentUserMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          Text(
-            message.sender.fullName,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[isDarkMode ? 400 : 600],
+      child: Align(
+        alignment: isCurrentUserMessage ? Alignment.centerRight : Alignment.centerLeft,
+        child: GestureDetector(
+          onLongPress: isCurrentUserMessage
+            ? () => _showDeleteDialog(message.id)
+            : null,
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.75,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isCurrentUserMessage
+                ? Colors.purple
+                : (isDarkMode ? const Color(0xFF2A2A2A) : Colors.grey[300]),
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(18),
+                topRight: const Radius.circular(18),
+                bottomLeft: Radius.circular(isCurrentUserMessage ? 18 : 4),
+                bottomRight: Radius.circular(isCurrentUserMessage ? 4 : 18),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message.messageContent,
+                  style: TextStyle(
+                    color: isCurrentUserMessage ? Colors.white : textColor,
+                    fontSize: 15,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _formatTime(message.createdAt),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isCurrentUserMessage
+                      ? Colors.white.withOpacity(0.7)
+                      : Colors.grey[600],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          GestureDetector(
-            onLongPress: isCurrentUserMessage
-              ? () => _showDeleteDialog(message.id)
-              : null,
-            child: Container(
-              margin: EdgeInsets.only(
-                right: isCurrentUserMessage ? 0 : 50,
-                left: isCurrentUserMessage ? 50 : 0,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isCurrentUserMessage
-                  ? Colors.purple
-                  : (isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey[200]),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.messageContent,
-                    style: TextStyle(
-                      color: isCurrentUserMessage ? Colors.white : textColor,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatTime(message.createdAt),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isCurrentUserMessage
-                        ? Colors.white70
-                        : Colors.grey[isDarkMode ? 500 : 400],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   // Build message input field
   Widget _buildMessageInput(bool isDarkMode) {
-    final inputColor = isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey[100];
-    final hintColor = isDarkMode ? Colors.grey[600] : Colors.grey[400];
+    final inputColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+    final borderColor = isDarkMode ? const Color(0xFF3A3A3A) : Colors.grey[300];
 
     return Container(
-      padding: const EdgeInsets.all(12.0),
-      color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              enabled: !_isSendingMessage,
-              maxLines: null,
-              decoration: InputDecoration(
-                hintText: 'Skriv en besked...',
-                hintStyle: TextStyle(color: hintColor),
-                filled: true,
-                fillColor: inputColor,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                border: OutlineInputBorder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: inputColor,
+        border: Border(
+          top: BorderSide(
+            color: borderColor!,
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.grey[100],
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+                ),
+                child: TextField(
+                  controller: _messageController,
+                  enabled: !_isSendingMessage,
+                  maxLines: null,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Skriv en besked...',
+                    hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.grey[600] : Colors.grey[500],
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
+                    border: InputBorder.none,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          FloatingActionButton(
-            mini: true,
-            backgroundColor: Colors.purple,
-            onPressed: _isSendingMessage ? null : _sendMessage,
-            child: _isSendingMessage
-              ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-              : const Icon(Icons.send, color: Colors.white),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.purple,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.purple.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: _isSendingMessage
+                  ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                  : const Icon(Icons.send_rounded, color: Colors.white, size: 22),
+                onPressed: _isSendingMessage ? null : _sendMessage,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
