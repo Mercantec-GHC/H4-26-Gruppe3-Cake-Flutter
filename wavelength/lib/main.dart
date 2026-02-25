@@ -59,10 +59,10 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     if (!mounted) return;
 
     if (token != null) {
-      // Token is valid, navigate to home page
+      // Token is valid, navigate to discover page
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const MyHomePage(title: 'Wavelength'),
+          builder: (context) => const DiscoverPage(),
         ),
       );
     } else {

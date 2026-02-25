@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import '../models/chat_model.dart';
+import '../services/auth_service.dart';
 import '../services/chat_service.dart';
 
 class ChatPage extends StatefulWidget {
@@ -27,7 +27,7 @@ class _ChatPageState extends State<ChatPage> {
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
   late Timer _refreshTimer;
-  final _secureStorage = const FlutterSecureStorage();
+  static final _authService = AuthService();
 
   List<ChatMessage> _messages = [];
   String? _nextCursor;
@@ -38,6 +38,7 @@ class _ChatPageState extends State<ChatPage> {
   String? _errorMessage;
   String? _currentUserId;
   String? _actualChatRoomId;
+  int _lastLoadMoreMs = 0;
 
   @override
   void initState() {
@@ -89,7 +90,7 @@ class _ChatPageState extends State<ChatPage> {
   // Get current user ID from token
   Future<void> _loadCurrentUserId() async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
       if (token != null) {
         final parts = token.split('.');
         if (parts.length == 3) {
@@ -131,7 +132,9 @@ class _ChatPageState extends State<ChatPage> {
         _isLoadingMessages = false;
       });
 
-      _scrollToBottom();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -150,15 +153,25 @@ class _ChatPageState extends State<ChatPage> {
 
       if (!mounted) return;
 
+      final latestPage = response.messageObjects.reversed.toList();
+      final hasLoadedOlder = _messages.length > latestPage.length;
+
       // Only update if messages changed
-      if (response.messageObjects.length != _messages.length) {
+      if (latestPage.length != _messages.length) {
+        final existingIds = _messages.map((m) => m.id).toSet();
+        final newMessages = latestPage.where((m) => !existingIds.contains(m.id));
+
         setState(() {
-          _messages = response.messageObjects.reversed.toList();
-          _nextCursor = response.nextCursor;
-          _hasMore = response.hasMore;
+          _messages = [
+            ..._messages,
+            ...newMessages,
+          ];
+          if (!hasLoadedOlder) {
+            _nextCursor = response.nextCursor;
+            _hasMore = response.hasMore;
+          }
           _errorMessage = null;
         });
-        _scrollToBottom();
       }
     } catch (e) {
       // Silently fail for auto-refresh
@@ -168,17 +181,33 @@ class _ChatPageState extends State<ChatPage> {
 
   // Load more messages when scrolling up
   void _onScroll() {
-    if (_scrollController.position.pixels <= 
-      _scrollController.position.maxScrollExtent - 200) {
-        if (_hasMore && !_isLoadingMore && _nextCursor != null) {
-          _loadMoreMessages();
-        }
-      }
+    if (!_scrollController.hasClients) {
+      return;
+    }
+
+    if (!_hasMore || _isLoadingMore || _nextCursor == null) {
+      return;
+    }
+
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    if (nowMs - _lastLoadMoreMs < 400) {
+      return;
+    }
+
+    final position = _scrollController.position;
+    if (position.pixels <= position.minScrollExtent + 200) {
+      _lastLoadMoreMs = nowMs;
+      _loadMoreMessages();
+    }
   }
 
   // Load additional messages
   Future<void> _loadMoreMessages() async {
     if (_isLoadingMore || !_hasMore || _nextCursor == null) return;
+
+    final previousMaxExtent = _scrollController.hasClients
+        ? _scrollController.position.maxScrollExtent
+        : null;
 
     setState(() {
       _isLoadingMore = true;
@@ -198,6 +227,19 @@ class _ChatPageState extends State<ChatPage> {
         _hasMore = response.hasMore;
         _isLoadingMore = false;
       });
+
+      if (_scrollController.hasClients && previousMaxExtent != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_scrollController.hasClients) return;
+          final newMax = _scrollController.position.maxScrollExtent;
+          final delta = newMax - previousMaxExtent;
+          if (delta > 0) {
+            _scrollController.jumpTo(
+              _scrollController.position.pixels + delta,
+            );
+          }
+        });
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -377,8 +419,9 @@ class _ChatPageState extends State<ChatPage> {
     }
   
 
-  return ListView.builder(
+    return ListView.builder(
       controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {

@@ -2,16 +2,18 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/chat_model.dart';
+import 'auth_service.dart';
 
 // API service for chat operation
 class ChatService {
   static const String baseUrl = 'https://wavelength-api.mercantec.tech';
-  static const _secureStorage = FlutterSecureStorage();
+  //static const _secureStorage = FlutterSecureStorage();
+  static final _authService = AuthService();
 
   // Get chat room for a matched user by name
   static Future<ChatRoom> getChatRoomForUser(String userName) async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
 
       if (token == null) throw Exception('No authentication token found');
 
@@ -59,7 +61,7 @@ class ChatService {
   // Remove notifications for a chat room
   static Future<void> removeNotifications(String chatRoomId) async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
 
       if (token == null) throw Exception('No authentication token found');
 
@@ -84,7 +86,7 @@ class ChatService {
   // Get chat room details
   static Future<ChatRoom> getChatRoom(String chatRoomId) async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
 
       if (token == null) throw Exception('No authentication token found');
 
@@ -113,7 +115,7 @@ class ChatService {
     String messageContent
   ) async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
 
       if (token == null) throw Exception('No authentication token found');
 
@@ -145,7 +147,7 @@ class ChatService {
     String? cursor
   ) async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
 
       if (token == null) throw Exception('No authentication token found');
 
@@ -186,7 +188,7 @@ class ChatService {
   // Delete a message
   static Future<void> deleteMessage(int messageId) async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
 
       if (token == null) throw Exception('No authentication token found');
 
@@ -207,7 +209,7 @@ class ChatService {
   // Leave a chat room
   static Future<void> leaveChatRoom(String chatRoomId) async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
 
       if (token == null) throw Exception('No authentication token found');
 
