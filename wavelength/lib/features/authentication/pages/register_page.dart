@@ -60,7 +60,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (!mounted) return;
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201)  {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Bruger oprettet succesfuldt!'),
