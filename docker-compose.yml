@@ -4,6 +4,8 @@ services:
     build:
       context: ./wavelength
       dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
     container_name: wavelength-flutter
     ports:
       - "${HTTP_PORT}:80"
