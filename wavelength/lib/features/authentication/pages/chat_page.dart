@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
+import 'package:flutter/services.dart';
 import '../models/chat_model.dart';
 import '../services/chat_service.dart';
 
@@ -24,6 +25,7 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _focusNode = FocusNode();
   late Timer _refreshTimer;
   final _secureStorage = const FlutterSecureStorage();
 
@@ -80,6 +82,7 @@ class _ChatPageState extends State<ChatPage> {
     _refreshTimer.cancel();
     _messageController.dispose();
     _scrollController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -481,25 +484,46 @@ class _ChatPageState extends State<ChatPage> {
                   color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.grey[100],
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: TextField(
-                  controller: _messageController,
-                  enabled: !_isSendingMessage,
-                  maxLines: null,
-                  textCapitalization: TextCapitalization.sentences,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Skriv en besked...',
-                    hintStyle: TextStyle(
-                      color: isDarkMode ? Colors.grey[600] : Colors.grey[500],
+                child: Focus(
+                  focusNode: _focusNode,
+                  onKeyEvent: (node, event) {
+                    // Handle Enter for sending, Shift+Enter for new line
+                    if (event is KeyDownEvent) {
+                      final isShiftPressed = HardwareKeyboard.instance.isShiftPressed;
+                      final isEnterPressed = event.logicalKey == LogicalKeyboardKey.enter;
+                      
+                      // If Enter without Shift, send message
+                      if (isEnterPressed && !isShiftPressed) {
+                        _sendMessage();
+                        return KeyEventResult.handled;
+                      }
+                      // If Shift+Enter, allow new line (default behavior)
+                      if (isEnterPressed && isShiftPressed) {
+                        return KeyEventResult.ignored;
+                      }
+                    }
+                    return KeyEventResult.ignored;
+                  },
+                  child: TextField(
+                    controller: _messageController,
+                    enabled: !_isSendingMessage,
+                    maxLines: null,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: isDarkMode ? Colors.white : Colors.black87,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 12,
+                    decoration: InputDecoration(
+                      hintText: 'Skriv en besked...',
+                      hintStyle: TextStyle(
+                        color: isDarkMode ? Colors.grey[600] : Colors.grey[500],
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
+                      border: InputBorder.none,
                     ),
-                    border: InputBorder.none,
                   ),
                 ),
               ),
