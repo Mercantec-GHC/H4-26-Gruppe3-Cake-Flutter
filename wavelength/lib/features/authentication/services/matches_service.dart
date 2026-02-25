@@ -2,10 +2,13 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../models/matched_user_model.dart';
+import 'auth_service.dart';
 
 class MatchesService {
   static const String baseUrl = 'https://wavelength-api.mercantec.tech';
-  static const _secureStorage = FlutterSecureStorage();
+  //static const _secureStorage = FlutterSecureStorage();
+  static final _authService = AuthService();
+
 
   // Fetch a page of matched users from the API.
   static Future<List<MatchedUser>> fetchMatchedUsers({
@@ -13,7 +16,7 @@ class MatchesService {
     required int count,
   }) async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
       if (token == null) {
         throw Exception('No authentication token found');
       }
@@ -53,7 +56,7 @@ class MatchesService {
     required int pageCount,
   }) async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
       if (token == null) {
         throw Exception('No authentication token found');
       }
