@@ -5,7 +5,6 @@ import '../models/login_model.dart';
 import '../models/login_response_model.dart';
 import '../services/auth_service.dart';
 import 'register_page.dart';
-import 'profile_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../main.dart';
 

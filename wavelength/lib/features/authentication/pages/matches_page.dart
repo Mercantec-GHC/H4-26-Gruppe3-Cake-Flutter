@@ -22,7 +22,7 @@ class _MatchesPageState extends State<MatchesPage> {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   late final Future<String?> _tokenFuture;
 
-  // Page size is intentionally small during testing; I will set it to 10 later.
+  // Page size is set to 1 during testing; It will be set to 10 for production.
   static const int _pageSize = 10;
   int _currentPage = 1;
   int _totalPages = 1;
