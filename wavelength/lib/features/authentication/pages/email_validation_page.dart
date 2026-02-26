@@ -15,6 +15,7 @@ class EmailValidationPage extends StatefulWidget {
 }
 
 class _EmailValidationPageState extends State<EmailValidationPage> {
+  // Input til 6-cifret kode
   final _codeController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
@@ -26,6 +27,7 @@ class _EmailValidationPageState extends State<EmailValidationPage> {
   }
 
   Future<void> _verifyEmail() async {
+    // Lokal validering af kode
     if (_codeController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -51,6 +53,7 @@ class _EmailValidationPageState extends State<EmailValidationPage> {
         _isLoading = true;
       });
 
+      // API kald til bekræftelse
       final response = await _authService.verifyEmail(_codeController.text);
 
       setState(() {
@@ -60,6 +63,7 @@ class _EmailValidationPageState extends State<EmailValidationPage> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
+        // Succes -> vis besked og send til login
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Email bekræftet! Omdirigerer til login...'),
@@ -76,6 +80,7 @@ class _EmailValidationPageState extends State<EmailValidationPage> {
           );
         });
       } else if (response.statusCode == 400) {
+        // Ugyldig kode - vis fejl
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Ugyldig kode. Prøv igen.'),
@@ -83,6 +88,7 @@ class _EmailValidationPageState extends State<EmailValidationPage> {
           ),
         );
       } else {
+        // Andre fejl - vis fejlbesked
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Fejl: ${response.body}'),
@@ -116,6 +122,7 @@ class _EmailValidationPageState extends State<EmailValidationPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // App logo
                 Image.asset(
                   'assets/images/app_icon.png',
                   width: 200,
@@ -132,6 +139,7 @@ class _EmailValidationPageState extends State<EmailValidationPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
+                // Oplyser hvilken email koden er sendt til
                 Text(
                   'Vi har sendt en 6-cifret kode til:\n${widget.email}',
                   textAlign: TextAlign.center,
@@ -141,6 +149,7 @@ class _EmailValidationPageState extends State<EmailValidationPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
+                // Kode input
                 SizedBox(
                   width: 350,
                   child: TextField(
@@ -167,6 +176,7 @@ class _EmailValidationPageState extends State<EmailValidationPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
+                // Bekræft-knap
                 SizedBox(
                   width: 350,
                   height: 50,

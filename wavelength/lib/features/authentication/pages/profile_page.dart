@@ -20,8 +20,8 @@ class _ProfilePageState extends State<ProfilePage> {
   final _authService = AuthService();
   final _secureStorage = FlutterSecureStorage();
   final _imagePicker = ImagePicker();
+  
 
-  // --- State variables ---
   UserModel? _user;
   bool _isLoading = true;
   bool _isEditing = false;
@@ -29,10 +29,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Uint8List? _avatarImage;
   bool _hasQuiz = false;
 
-  // Editing
   final _descriptionController = TextEditingController();
 
-  // --- Tags ---
+  //Tags
   Map<String, String> _availableTags = {}; // id -> name
   Set<String> _selectedTagIds = {}; // Store tag IDs instead of names
   bool _tagsLoading = false;
@@ -75,6 +74,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return [...selected, ...notSelected];
   }
 
+  //Load & Save Profile 
   Future<void> _loadUserProfile() async {
     setState(() => _isLoading = true);
     try {
@@ -177,7 +177,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // --- AVATAR UPLOAD ---
+  // Avatar upload
   Future<void> _pickAndUploadAvatar() async {
     try {
       final img = await _imagePicker.pickImage(
@@ -209,7 +209,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // --- LOG UD ---
+  // Logout
   Future<void> _logout() async {
     try {
       final token = await _authService.getValidJwtToken();
@@ -225,7 +225,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // --- SKIFT ADGANGSKODE ---
+  // Change password
   void _showChangePasswordDialog() {
     final old = TextEditingController();
     final newPwd = TextEditingController();
@@ -308,7 +308,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // --- LAV QUIZ ---
+  //Quiz
   Future<bool?> _showQuizEditor() async {
     return await showModalBottomSheet<bool>(
       context: context,
@@ -323,6 +323,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    //Profile UI
     return Scaffold(
       appBar: AppBar(
         // --- HEADER ---
@@ -493,6 +494,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                       ? TextField(
                                           controller: _descriptionController,
                                           maxLines: 4,
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                          ),
                                           decoration: InputDecoration(
                                             hintText: 'Fortæl om dig selv...',
                                             filled: true,
@@ -537,7 +541,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                                         .description
                                                         ?.isNotEmpty ==
                                                     true
-                                                ? Colors.black87
+                                                ? Colors.white
                                                 : Colors.grey,
                                           ),
                                         ),
@@ -545,7 +549,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
                           ),
-                          // --- TAGS ---
+                          // --- Show tags only in view mode ---
                           if (!_isEditing &&
                               (_user!.tags?.isNotEmpty ?? false)) ...[
                             const SizedBox(height: 20),
@@ -807,7 +811,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// --- QUIZ EDITOR MODAL ---
+// Quiz editor modal
 class _QuizEditorModal extends StatefulWidget {
   final AuthService authService;
   final bool shouldLoadExisting;
@@ -821,6 +825,7 @@ class _QuizEditorModal extends StatefulWidget {
   State<_QuizEditorModal> createState() => _QuizEditorModalState();
 }
 
+//Complex widget for creation and editing quiz 
 class _QuizEditorModalState extends State<_QuizEditorModal> {
   final List<_QuestionData> _questions = [_QuestionData()];
   int _scoreRequired = 1;
@@ -902,7 +907,7 @@ class _QuizEditorModalState extends State<_QuizEditorModal> {
     if (_questions.length < 10) {
       setState(() {
         _questions.add(_QuestionData());
-        // Adjust required score if needed
+        // Adjust required score if needed (because we added a new question)
         if (_scoreRequired > _questions.length) {
           _scoreRequired = _questions.length;
         }
@@ -915,7 +920,7 @@ class _QuizEditorModalState extends State<_QuizEditorModal> {
       setState(() {
         _questions[index].dispose();
         _questions.removeAt(index);
-        // Adjust required score if needed
+        // Adjust required score if needed (because we removed a question)
         if (_scoreRequired > _questions.length) {
           _scoreRequired = _questions.length;
         }
@@ -924,7 +929,7 @@ class _QuizEditorModalState extends State<_QuizEditorModal> {
   }
 
   Future<void> _saveQuiz() async {
-    // Validation
+    // Validate questions
     if (_questions.isEmpty) {
       _showSnack('Tilføj mindst ét spørgsmål', success: false);
       return;
@@ -1041,7 +1046,7 @@ class _QuizEditorModalState extends State<_QuizEditorModal> {
         ),
         child: Column(
           children: [
-            // Header
+            // Header 
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -1274,6 +1279,7 @@ class _QuizEditorModalState extends State<_QuizEditorModal> {
   }
 }
 
+//Quiz question model
 class _QuestionData {
   String questionText = '';
   List<String> options = ['', ''];
@@ -1298,6 +1304,7 @@ class _QuestionData {
   }
 }
 
+//Quiz question card
 class _QuestionCard extends StatelessWidget {
   final int questionNumber;
   final _QuestionData questionData;
