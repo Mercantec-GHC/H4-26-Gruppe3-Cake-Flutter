@@ -1,6 +1,5 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/discover_model.dart';
 import 'auth_service.dart';
 
@@ -29,7 +28,7 @@ class DiscoverService {
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
-        print('Discover Response: $json');
+        //print('Discover Response: $json');
         return DiscoverUser.fromJson(json);
       } else {
         throw Exception('Failed: ${response.statusCode} - ${response.body}');
@@ -62,15 +61,16 @@ class DiscoverService {
         },
       ).timeout(const Duration(seconds: 10));
 
-      print('Dismiss Response: Status ${response.statusCode}');
-      print('Dismiss Response Body: ${response.body}');
+      //print('Dismiss Response: Status ${response.statusCode}');
+      //print('Dismiss Response Body: ${response.body}');
 
-      if (response.statusCode != 200 && response.statusCode != 201 && response.statusCode != 204) {
-        print('Error dismissing user: ${response.statusCode} - ${response.body}');
-      } else {
-        print('User successfully dismissed: $targetId');
-      }
+      // if (response.statusCode != 200 && response.statusCode != 201 && response.statusCode != 204) {
+      //   print('Error dismissing user: ${response.statusCode} - ${response.body}');
+      // } else {
+      //   print('User successfully dismissed: $targetId');
+      // }
     } catch (e) {
+      // ignore: avoid_print
       print('Error dismissing user: $e');
     }
   }

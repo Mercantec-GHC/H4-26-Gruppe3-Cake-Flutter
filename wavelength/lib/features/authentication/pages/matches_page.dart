@@ -1,9 +1,7 @@
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:wavelength/widgets/main_bottom_nav.dart';
 import '../models/matched_user_model.dart';
@@ -22,7 +20,6 @@ class _MatchesPageState extends State<MatchesPage> {
   // State til liste, pagination og token
   final List<MatchedUser> _matches = [];
   final ScrollController _scrollController = ScrollController();
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   static final _authService = AuthService();
   late final Future<String?> _tokenFuture;
 
@@ -248,8 +245,8 @@ class _MatchesPageState extends State<MatchesPage> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.3)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black
+                : Colors.grey,
             blurRadius: 8,
             spreadRadius: 0,
             offset: const Offset(0, 2),
@@ -317,7 +314,7 @@ class _MatchesPageState extends State<MatchesPage> {
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF9B6DD9).withOpacity(0.3),
+                        color: const Color(0xFF9B6DD9),
                         blurRadius: 8,
                         spreadRadius: 0,
                         offset: const Offset(0, 3),
@@ -412,7 +409,7 @@ class _MatchesPageState extends State<MatchesPage> {
         color: Colors.grey[300],
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey,
             blurRadius: 4,
             spreadRadius: 0,
             offset: const Offset(0, 2),
