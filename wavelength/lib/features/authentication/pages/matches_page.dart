@@ -35,7 +35,6 @@ class _MatchesPageState extends State<MatchesPage> {
   void initState() {
     super.initState();
     _tokenFuture = _authService.getValidJwtToken();
-    // Hent første side af matches
     _loadInitial();
   }
 
