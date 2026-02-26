@@ -1,6 +1,5 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/chat_model.dart';
 import 'auth_service.dart';
 
@@ -25,8 +24,8 @@ class ChatService {
         },
       ).timeout(const Duration(seconds: 10));
 
-      print('DEBUG getChatRoomForUser - Status: ${response.statusCode}');
-      print('DEBUG getChatRoomForUser - Body: ${response.body}');
+      //print('DEBUG getChatRoomForUser - Status: ${response.statusCode}');
+      //print('DEBUG getChatRoomForUser - Body: ${response.body}');
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final List<dynamic> rooms = jsonDecode(response.body);
@@ -36,11 +35,11 @@ class ChatService {
           final chatRoomName = room['chatRoomName'] ?? '';
           final chatRoomId = room['chatRoomId'] ?? '';
           
-          print('DEBUG Room: name=$chatRoomName, id=$chatRoomId');
+          //print('DEBUG Room: name=$chatRoomName, id=$chatRoomId');
           
           // Match by user name in room name
           if (chatRoomName.contains(userName) && chatRoomId.isNotEmpty) {
-            print('DEBUG Found matching room: $chatRoomName with ID: $chatRoomId');
+            //print('DEBUG Found matching room: $chatRoomName with ID: $chatRoomId');
             return ChatRoom(
               id: chatRoomId,
               name: chatRoomName,
@@ -73,12 +72,13 @@ class ChatService {
         },
       ).timeout(const Duration(seconds: 10));
 
-      print('DEBUG removeNotifications - Status: ${response.statusCode}');
+      //print('DEBUG removeNotifications - Status: ${response.statusCode}');
 
       if (response.statusCode != 200) {
         throw Exception('Failed to remove notifications: ${response.statusCode}');
       }
     } catch (e) {
+      // ignore: avoid_print
       print('Error removing notifications: $e');
     }
   }
@@ -132,8 +132,8 @@ class ChatService {
       ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) {
-        print('DEBUG sendMessage - Status: ${response.statusCode}');
-        print('DEBUG sendMessage - Body: ${response.body}');
+        //print('DEBUG sendMessage - Status: ${response.statusCode}');
+        //print('DEBUG sendMessage - Body: ${response.body}');
         throw Exception('Failed to send message: ${response.statusCode}');
       }
     } catch (e) {
@@ -176,8 +176,8 @@ class ChatService {
         final json = jsonDecode(response.body);
         return ChatMessagesResponse.fromJson(json);
       } else {
-        print('DEBUG getMessages - Status: ${response.statusCode}');
-        print('DEBUG getMessages - Body: ${response.body}');
+        //print('DEBUG getMessages - Status: ${response.statusCode}');
+        //print('DEBUG getMessages - Body: ${response.body}');
         throw Exception('Failed to get messages: ${response.statusCode}');
       }
     } catch (e) {
