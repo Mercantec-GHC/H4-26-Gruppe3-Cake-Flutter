@@ -34,7 +34,7 @@ class _MatchesPageState extends State<MatchesPage> {
   @override
   void initState() {
     super.initState();
-    _tokenFuture = _secureStorage.read(key: 'jwtToken');
+    _tokenFuture = _authService.getValidJwtToken();
     // Hent første side af matches
     _loadInitial();
   }
@@ -235,8 +235,15 @@ class _MatchesPageState extends State<MatchesPage> {
     );
   }
 
-  Widget _buildMatchCard(MatchedUser match) {
     // Kort for en enkelt match
+  Widget _buildMatchCard(MatchedUser match) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDarkMode ? const Color(0xFF2A2A2A) : Colors.white;
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
+    final chipBgColor = isDarkMode ? const Color(0xFF3A3A3A) : Colors.white;
+    final chipBorderColor =
+        isDarkMode ? const Color(0xFF4A4A4A) : Colors.grey[300]!;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
       decoration: BoxDecoration(

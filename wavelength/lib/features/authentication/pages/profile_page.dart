@@ -494,6 +494,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                       ? TextField(
                                           controller: _descriptionController,
                                           maxLines: 4,
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                          ),
                                           decoration: InputDecoration(
                                             hintText: 'Fortæl om dig selv...',
                                             filled: true,
@@ -538,7 +541,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                                         .description
                                                         ?.isNotEmpty ==
                                                     true
-                                                ? Colors.black87
+                                                ? Colors.white
                                                 : Colors.grey,
                                           ),
                                         ),
