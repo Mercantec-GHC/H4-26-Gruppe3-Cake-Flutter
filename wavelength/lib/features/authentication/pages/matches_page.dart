@@ -33,7 +33,7 @@ class _MatchesPageState extends State<MatchesPage> {
   @override
   void initState() {
     super.initState();
-    _tokenFuture = _authService.getValidJwtToken();
+    _tokenFuture = _authService.getValidJwtToken(); // Error
     _loadInitial();
   }
 
