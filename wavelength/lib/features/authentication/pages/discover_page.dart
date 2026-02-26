@@ -54,7 +54,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       });
     }
   }
-
+  
   Future<void> _loadNextProfile() async {
     try {
       final newProfile = await DiscoverService.fetchDiscoverUser();

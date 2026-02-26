@@ -19,13 +19,14 @@ class MatchesPage extends StatefulWidget {
 }
 
 class _MatchesPageState extends State<MatchesPage> {
+  // State til liste, pagination og token
   final List<MatchedUser> _matches = [];
   final ScrollController _scrollController = ScrollController();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   static final _authService = AuthService();
   late final Future<String?> _tokenFuture;
 
-  // Page size is intentionally small during testing; I will set it to 10 later.
+  // Page size is set to 1 during testing; It will be set to 10 for production.
   static const int _pageSize = 10;
   int _currentPage = 1;
   int _totalPages = 1;
@@ -36,7 +37,8 @@ class _MatchesPageState extends State<MatchesPage> {
   @override
   void initState() {
     super.initState();
-    _tokenFuture = _authService.getValidJwtToken();
+    _tokenFuture = _secureStorage.read(key: 'jwtToken');
+    // Hent første side af matches
     _loadInitial();
   }
 
@@ -47,6 +49,7 @@ class _MatchesPageState extends State<MatchesPage> {
   }
 
   Future<void> _loadInitial() async {
+    // Nulstil state og hent side 1
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -94,6 +97,7 @@ class _MatchesPageState extends State<MatchesPage> {
   }
 
   Future<void> _loadMore() async {
+    // Pagination: hent flere matches
     if (_isLoadingMore || _currentPage >= _totalPages) return;
 
     setState(() {
@@ -165,6 +169,7 @@ class _MatchesPageState extends State<MatchesPage> {
   }
 
   Widget _buildBody() {
+    // Vis loading/fejl/empty/list
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -205,6 +210,7 @@ class _MatchesPageState extends State<MatchesPage> {
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
+        // Load næste side når vi er tæt på bunden
         if (notification is ScrollUpdateNotification ||
             notification is OverscrollNotification) {
           if (notification.metrics.extentAfter < 200) {
@@ -233,13 +239,7 @@ class _MatchesPageState extends State<MatchesPage> {
   }
 
   Widget _buildMatchCard(MatchedUser match) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDarkMode ? const Color(0xFF2A2A2A) : Colors.white;
-    final textColor = isDarkMode ? Colors.white : Colors.black87;
-    final chipBgColor = isDarkMode ? const Color(0xFF3A3A3A) : Colors.white;
-    final chipBorderColor =
-        isDarkMode ? const Color(0xFF4A4A4A) : Colors.grey[300]!;
-
+    // Kort for en enkelt match
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
       decoration: BoxDecoration(
@@ -278,7 +278,7 @@ class _MatchesPageState extends State<MatchesPage> {
               ],
             ),
             const SizedBox(height: 10),
-            // Show up to 3 tags to keep the card compact.
+            // Viser max 3 tags for kompakt kort. 
             if (match.tags.isNotEmpty)
               Wrap(
                 spacing: 4.0,
@@ -356,6 +356,7 @@ class _MatchesPageState extends State<MatchesPage> {
   }
 
   Widget _buildAvatar(String userId) {
+    // Web: hent bytes direkte. Mobil: cached image med auth header.
     // Web uses direct byte fetch because cached_network_image headers are limited on web.
     if (kIsWeb) {
       return FutureBuilder<Uint8List?>(
@@ -383,7 +384,7 @@ class _MatchesPageState extends State<MatchesPage> {
           return _buildAvatarPlaceholder();
         }
 
-        // Native platforms can use cached images with auth headers.
+        // CachedNetworkImage håndterer caching og auth headers på mobil. På web er der begrænsninger, så vi bruger Image.memory der i stedet.
         return ClipOval(
           child: CachedNetworkImage(
             imageUrl: MatchesService.getAvatarUrl(userId),
@@ -402,6 +403,7 @@ class _MatchesPageState extends State<MatchesPage> {
   }
 
   Widget _buildAvatarPlaceholder() {
+    // Placeholder avatar når billedet mangler
     return Container(
       width: 50,
       height: 50,
@@ -422,6 +424,7 @@ class _MatchesPageState extends State<MatchesPage> {
   }
 
   List<String> _selectTags(MatchedUser match) {
+    // Viser max 3 tags for kompakt kort
     if (match.tags.length <= 3) {
       return match.tags;
     }
@@ -432,6 +435,7 @@ class _MatchesPageState extends State<MatchesPage> {
   }
 
   Future<Uint8List?> _fetchAvatarBytes({required String userId}) async {
+    // Hent avatar med token til web
     try {
       final token = await _authService.getValidJwtToken();
       if (token == null) return null;
