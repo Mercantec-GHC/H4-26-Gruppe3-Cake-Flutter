@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wavelength/widgets/main_bottom_nav.dart';
 import '../models/discover_model.dart';
 import '../services/auth_service.dart';
@@ -62,7 +61,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         _profiles.add(newProfile);
       });
     } catch (e) {
-      print('Error loading next profile: $e');
+      //print('Error loading next profile: $e');
     }
   }
 
@@ -454,7 +453,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       if (response.statusCode == 200) {
         return response.bodyBytes;
       } else {
-        print('Error fetching image bytes: ${response.statusCode}');
+        //print('Error fetching image bytes: ${response.statusCode}');
         return null;
       }
     } catch (e) {
@@ -498,7 +497,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
   }
 
-  final _secureStorage = const FlutterSecureStorage();
 
   Widget _buildCategoryTags(DiscoverUser user) {
     return Wrap(
@@ -543,7 +541,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
           ),
           boxShadow: [
             BoxShadow(
-              color: shadowColor.withOpacity(0.3),
+              color: shadowColor,
               blurRadius: 8,
               spreadRadius: 0,
               offset: const Offset(0, 3),
@@ -563,7 +561,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black,
             blurRadius: 12,
             spreadRadius: 0,
             offset: const Offset(0, 4),

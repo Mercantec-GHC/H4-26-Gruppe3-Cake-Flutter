@@ -103,11 +103,11 @@ class _ChatPageState extends State<ChatPage> {
               _currentUserId = json['sub'] as String?;
             });
           }
-          print('DEBUG loaded current user ID: $_currentUserId');
+          //print('DEBUG loaded current user ID: $_currentUserId');
         }
       }
     } catch (e) {
-      print('Error loading current user ID: $e');
+      //print('Error loading current user ID: $e');
     }
   }
 
@@ -175,7 +175,7 @@ class _ChatPageState extends State<ChatPage> {
       }
     } catch (e) {
       // Silently fail for auto-refresh
-      print('Error auto-loading messages: $e');
+      //print('Error auto-loading messages: $e');
     }
   }
 

@@ -8,6 +8,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class AuthService {
   final _secureStorage = FlutterSecureStorage();
   static const String baseUrl = 'https://wavelength-api.mercantec.tech';
+  
+  // Lock to prevent concurrent refresh attempts
+  Future<String?>? _refreshInProgress;
+  DateTime? _lastRefreshTime;
 
   Future<http.Response> register(RegisterModel user) async {
     try {
@@ -132,7 +136,7 @@ class AuthService {
         'ConfirmNewPassword': confirmNewPassword,
       });
 
-      print('UpdatePassword Request Body: $body'); // Debug
+      //print('UpdatePassword Request Body: $body'); // Debug
 
       final response = await http.put(
             Uri.parse('$baseUrl/Auth/UpdatePassword'),
@@ -148,9 +152,7 @@ class AuthService {
             },
           );
 
-      print(
-        'UpdatePassword Response: ${response.statusCode} - ${response.body}',
-      ); // Debug
+      //print('UpdatePassword Response: ${response.statusCode} - ${response.body}',); // Debug
 
       return response;
     } catch (e) {
@@ -227,9 +229,7 @@ class AuthService {
         ),
       );
 
-      print(
-        'Uploading avatar: $fileName with content-type: $contentType',
-      ); // Debug
+      //print('Uploading avatar: $fileName with content-type: $contentType',); // Debug
 
       final streamedResponse = await request.send().timeout(
         const Duration(seconds: 30),
@@ -239,9 +239,7 @@ class AuthService {
       );
 
       final response = await http.Response.fromStream(streamedResponse);
-      print(
-        'Upload Avatar Response: ${response.statusCode} - ${response.body}',
-      ); // Debug
+      //print('Upload Avatar Response: ${response.statusCode} - ${response.body}',); // Debug
 
       return response;
     } catch (e) {
@@ -274,7 +272,7 @@ class AuthService {
 
       return null;
     } catch (e) {
-      print('Fejl ved hentning af avatar: $e');
+      //print('Fejl ved hentning af avatar: $e');
       return null;
     }
   }
@@ -294,23 +292,54 @@ class AuthService {
     }
 
     final nowUtc = DateTime.now().toUtc();
-    if (nowUtc.isAfter(expiry)) {
-      final refreshed = await _refreshJwtToken(refreshToken);
-      if (!refreshed) {
+    
+    // Refresh mechanism is working correctly - disabled force refresh
+    final forceRefresh = false;
+    
+    if (forceRefresh || nowUtc.isAfter(expiry)) {
+      // If we just refreshed within the last 2 seconds, return the current token
+      if (_lastRefreshTime != null && 
+          nowUtc.difference(_lastRefreshTime!).inSeconds < 2) {
+        return jwtToken;
+      }
+      
+      // If a refresh is already in progress, wait for it
+      if (_refreshInProgress != null) {
+        return await _refreshInProgress;
+      }
+      
+      // Start a new refresh and store it so concurrent calls can wait
+      _refreshInProgress = _refreshJwtToken(refreshToken).then((newToken) {
+        _refreshInProgress = null; // Clear the lock when done
+        if (newToken != null) {
+          _lastRefreshTime = DateTime.now().toUtc(); // Track successful refresh
+        }
+        return newToken;
+      });
+      
+      final newJwtToken = await _refreshInProgress;
+      if (newJwtToken == null) {
         await clearTokens();
         return null;
       }
+      return newJwtToken;
     }
 
     return jwtToken;
   }
 
-  Future<bool> _refreshJwtToken(String refreshToken) async {
+  Future<String?> _refreshJwtToken(String refreshToken) async {
     try {
+      if (refreshToken.isEmpty) {
+        return null;
+      }
+
+      final body = jsonEncode({'Token': refreshToken});
+
       final response = await http.post(
             Uri.parse('$baseUrl/Auth/refresh'),
             headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'refreshToken': refreshToken}),
+            body: body,
           )
           .timeout(
             const Duration(seconds: 10),
@@ -320,7 +349,7 @@ class AuthService {
           );
 
       if (response.statusCode != 200) {
-        return false;
+        return null;
       }
 
       final Map<String, dynamic> json = jsonDecode(response.body);
@@ -332,15 +361,15 @@ class AuthService {
       final expiresValue = json['expires'] as int;
       newExpiry = DateTime.now().toUtc().add(Duration(seconds: expiresValue));
 
-      if (newJwtToken == null) return false;
+      if (newJwtToken == null) return null;
 
       await _secureStorage.write(key: 'jwtToken', value: newJwtToken);
       await _secureStorage.write(key: 'refreshToken', value: newRefreshToken);
       await _secureStorage.write(key: 'jwtExpiry', value: newExpiry.toString());
 
-      return true;
+      return newJwtToken;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 
