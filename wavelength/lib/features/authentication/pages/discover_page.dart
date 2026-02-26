@@ -3,11 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'dart:typed_data';
 import 'package:wavelength/widgets/main_bottom_nav.dart';
 import '../models/discover_model.dart';
-import '../models/quiz_model.dart';
-import '../models/quiz_result_model.dart';
+import '../services/auth_service.dart';
 import '../services/discover_service.dart';
 import '../services/quiz_service.dart';
 import '../widgets/quiz_dialog.dart';
@@ -20,6 +18,8 @@ class DiscoverPage extends StatefulWidget {
 }
 
 class _DiscoverPageState extends State<DiscoverPage> {
+  static final _authService = AuthService();
+
   List<DiscoverUser> _profiles = [];
   bool _isLoading = true;
   String? _error;
@@ -404,7 +404,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     } else {
       // Native platforms (Windows, iOS, Android) - use cached network image with headers
       return FutureBuilder<String?>(
-        future: _secureStorage.read(key: 'jwtToken'),
+        future: _authService.getValidJwtToken(),
         builder: (context, tokenSnapshot) {
           if (!tokenSnapshot.hasData) {
             return _buildPlaceholder();
@@ -432,7 +432,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     bool isAvatar = false,
   }) async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
       if (token == null) return null;
 
       late String imageUrl;

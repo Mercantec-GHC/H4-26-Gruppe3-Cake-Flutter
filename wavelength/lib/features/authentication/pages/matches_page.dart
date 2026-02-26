@@ -7,7 +7,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:wavelength/widgets/main_bottom_nav.dart';
 import '../models/matched_user_model.dart';
+import '../services/auth_service.dart';
 import '../services/matches_service.dart';
+import 'chat_page.dart';
 
 class MatchesPage extends StatefulWidget {
   const MatchesPage({super.key});
@@ -21,6 +23,7 @@ class _MatchesPageState extends State<MatchesPage> {
   final List<MatchedUser> _matches = [];
   final ScrollController _scrollController = ScrollController();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  static final _authService = AuthService();
   late final Future<String?> _tokenFuture;
 
   // Page size is set to 1 during testing; It will be set to 10 for production.
@@ -125,11 +128,14 @@ class _MatchesPageState extends State<MatchesPage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor =
+        isDarkMode ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F7);
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -138,12 +144,14 @@ class _MatchesPageState extends State<MatchesPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Matches',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black87,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -235,11 +243,13 @@ class _MatchesPageState extends State<MatchesPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.withOpacity(0.1),
             blurRadius: 8,
             spreadRadius: 0,
             offset: const Offset(0, 2),
@@ -258,10 +268,10 @@ class _MatchesPageState extends State<MatchesPage> {
                 Expanded(
                   child: Text(
                     match.fullName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: textColor,
                     ),
                   ),
                 ),
@@ -277,12 +287,12 @@ class _MatchesPageState extends State<MatchesPage> {
                     .map(
                       (tag) => Chip(
                         label: Text(tag),
-                        backgroundColor: Colors.white,
+                        backgroundColor: chipBgColor,
                         side: BorderSide(
-                          color: Colors.grey[300]!,
+                          color: chipBorderColor,
                         ),
-                        labelStyle: const TextStyle(
-                          color: Colors.black87,
+                        labelStyle: TextStyle(
+                          color: textColor,
                           fontSize: 11,
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -325,6 +335,20 @@ class _MatchesPageState extends State<MatchesPage> {
                 ),
               ),
             ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _navigateToChat(match),
+                icon: const Icon(Icons.message),
+                label: const Text('Send besked'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -413,7 +437,7 @@ class _MatchesPageState extends State<MatchesPage> {
   Future<Uint8List?> _fetchAvatarBytes({required String userId}) async {
     // Hent avatar med token til web
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
       if (token == null) return null;
 
       final response = await http.get(
@@ -431,5 +455,17 @@ class _MatchesPageState extends State<MatchesPage> {
     }
 
     return null;
+  }
+
+  void _navigateToChat(MatchedUser match) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatPage(
+          participantId: match.id,
+          otherUserName: match.firstName,
+        ),
+      ),
+    );
   }
 }

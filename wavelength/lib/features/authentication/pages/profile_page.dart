@@ -212,7 +212,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // Logout
   Future<void> _logout() async {
     try {
-      final token = await _secureStorage.read(key: 'jwtToken');
+      final token = await _authService.getValidJwtToken();
       if (token != null) await _authService.logout(token);
       await _secureStorage.deleteAll();
       if (!mounted) return;
